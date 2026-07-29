@@ -1,0 +1,76 @@
+# ── Unreal Engine 생성 폴더 ──
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+Platforms/*/Binaries/
+Platforms/*/Build/
+Platforms/*/Intermediate/
+
+Plugins/**/Binaries/
+Plugins/**/Intermediate/
+
+# ── 원본 아트 소스 (임포트용, 저장소에 불필요) ──
+RawContent/
+ArtSource/
+*.fbx
+*.obj
+*.blend
+*.blend1
+*.psd
+*.psb
+*.tga
+*.exr
+*.hdr
+*.tif
+*.tiff
+
+# ── 오디오 / 영상 원본 ──
+*.wav
+*.mp3
+*.ogg
+*.flac
+*.mp4
+*.mov
+*.avi
+
+# ── 압축 파일 ──
+*.zip
+*.7z
+*.rar
+
+# ── Visual Studio ──
+.vs/
+*.sln
+*.suo
+*.sdf
+*.opensdf
+*.VC.db
+*.VC.opendb
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+
+# ── Rider / VS Code / Xcode ──
+.idea/
+*.DotSettings.user
+.vscode/
+*.xcodeproj/
+*.xcworkspace/
+
+# ── OS 잡파일 ──
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── 컴파일 산출물 ──
+*.obj
+*.pdb
+*.exe
+*.dll
+*.lib
+*.app
+
+# ── 기타 ──
+*.slnx
