@@ -21,4 +21,9 @@ public:
 
 	virtual void Shutdown() override;
 
+protected:
+	UPROPERTY()
+	FString Name;
+
+
 };
