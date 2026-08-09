@@ -24,7 +24,7 @@ public:
 		InArchive << InPigeonData.ID;
 		return InArchive;
 	}
-public:
+private:
 	UPROPERTY()
 	FString Name;
 	UPROPERTY()
