@@ -50,6 +50,10 @@ public:
 	
 	void SetPigeonID(const int32& InID) { ID = InID; }
 
+	// 방법 2) Serialize()함수
+	// 구조체를 따로 빼지 않고도 가능
+	virtual void Serialize(FArchive& Ar) override;
+
 private:
 	UPROPERTY()
 	FString Name;

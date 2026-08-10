@@ -12,70 +12,55 @@ USXGameInstance::USXGameInstance()
 void USXGameInstance::Init()
 {
 	Super::Init();
+	
+	// Serialaize : Pigeon76(객체) -Serialize(FMemoryArchive객체)-> 메모리 버퍼 -파일 아카이브(IFileManager)-> .bin
+	// DeSerialize : 반대
 
+	// 0. 새로운 객체 생성
 	USXPigeon* Pigeon76 = NewObject<USXPigeon>();
 	Pigeon76->SetPigeonName(TEXT("Pigeon76"));
 	Pigeon76->SetPigeonID(76);
 	UE_LOG(LogTemp, Log, TEXT("[Pigeon76] Name : %s, ID : %d"), *Pigeon76->GetPigeonName(), Pigeon76->GetPigeonID());
 
-	// 2. 파일형태로 직렬화-역직렬화 [패턴]
-	// 2.1 파일 형태이므로, 경로와 파일 이름이 필요함
-	// FPlatformMisc::ProjectDir(): 현재 프로젝트의 최상위 디렉토리 경로를 반환하는 역할
-	// FPaths::Combine: 여러 경로 문자열을 합쳐주는 역할
-	const FString SavedDirectoryPath 
-		= FPaths::Combine(FPlatformMisc::ProjectDir(), TEXT("Saved"));	// Combine으로 프로젝트 폴더 안에있는 Saved폴더까지 깊숙히
-	UE_LOG(LogTemp, Log, TEXT("SavedDirectoryPath : %s"), *SavedDirectoryPath);
-	const FString SavedFileName(TEXT("SerializedPigeon76Data.bin"));	// 파일 명에는 확장자까지 작성
-
-	// 2.2 상대경로 지정
-	// FPath:;Combine으로 FString타입의 '상대경로'를 만들 수 있음.
-	FString AbsoluteFilePath
-		= FPaths::Combine(*SavedDirectoryPath, *SavedFileName);
-	UE_LOG(LogTemp, Log, TEXT("RelativeFilePath : %s"), *AbsoluteFilePath);
-
-	// 2.3 절대경로 지정
-	// FPaths::MakeStandardFilename(상대_경로)로 '상대 경로'를 '절대 경로'로 만들 수 있음.
-	// 특히 경로 슬래시(\나 /)를 언리얼 포맷으로 깔끔하게 만들어 줌.
+	// 1. 경로 지정
+	// -> 경로에는 파일 경로 + 파일 이름을 Combine -> MakeStandardFilename으로 가공!
+	const FString SavedDirectoryPath = FPaths::Combine(FPlatformMisc::ProjectDir(), TEXT("Saved"));
+	const FString SavedFileName(TEXT("SerializedPigeon76Data.bin"));
+	FString AbsoluteFilePath = FPaths::Combine(*SavedDirectoryPath, *SavedFileName);
 	FPaths::MakeStandardFilename(AbsoluteFilePath);
-	UE_LOG(LogTemp, Log, TEXT("AbsoluteFilePath : %s"), *AbsoluteFilePath);
 
+	// 2. Serialize 단계
+	// 2.1 객체 <-> 메모리 버퍼 : FMemoryWriter/Reader로 생성한 아카이브 객체
+	TArray<uint8> BufferForWriter;						// 한 칸 uint8짜리 배열(버퍼역할)생성
+	FMemoryWriter MemoryWriterArchive(BufferForWriter);	// 이 버퍼를 인자로, 아카이브 객체 생성(작업공간을 할당)
+	Pigeon76->Serialize(MemoryWriterArchive);			// 이 아카이브 객체로, 우리가 override한 Serialize호출
 
-	// 3. 직렬화(파일 쓰기)
-	// 구조체 --> FArchive객체
-	// IFileManager::Get() : 파일 입출력 객체 접근
-	// CreateFileWriter(경로) : 경로에 접근 가능한 Writer 객체 생성
-	FSXPigeonData SerializedPigeon76Data(Pigeon76->GetPigeonName(), Pigeon76->GetPigeonID());
-	FArchive* WriterArchive = IFileManager::Get().CreateFileWriter(*AbsoluteFilePath);
-	if (WriterArchive != nullptr)
-	{
-		// FArchive가 Writer이므로, <<연산자는 파일에 '기록'으로 작동
-		*WriterArchive << SerializedPigeon76Data;
-		WriterArchive->Close();		// 다 썼으니 파일 핸들 닫기
-		delete WriterArchive;		// 메모리 해제
-		WriterArchive = nullptr;
+	// 2.2 메모리 버퍼 <-> 디스크 파일 : IFileManager로 생성한 아카이브 객체
+	TUniquePtr<FArchive> WriterArchive = TUniquePtr<FArchive>(IFileManager::Get().CreateFileWriter(*AbsoluteFilePath));
+	if (WriterArchive != nullptr) {
+		*WriterArchive << BufferForWriter;	// 아카이브 객체가 메모리 버퍼를 <<로 받아와 디스크 파일 작성
+		WriterArchive->Close();
+		WriterArchive = nullptr; // 이번엔 유니크 ptr로 써서, delete대신 nullptr
 	}
 
-	// 4. 역직렬화(파일 읽기)
-	// FArchive객체 --> 구조체
-	// 마찬가지, 다른건 Writer대신 Reader
-	FSXPigeonData DeserializedPigeon76Data;
-	FArchive* ReaderArchive = IFileManager::Get().CreateFileReader(*AbsoluteFilePath);
+	// 3. DeSerialize단계
+	// 3.1 유니크포인터 파일 아카이브로, 파일 데이터를 버퍼로 가져옴
+	TArray<uint8> BufferForReader;
+	TUniquePtr<FArchive> ReaderArchive = TUniquePtr<FArchive>(IFileManager::Get().CreateFileReader(*AbsoluteFilePath));
 	if (ReaderArchive != nullptr)
 	{
-		// FArchive가 Reader이므로, <<연산자는 파일을 '조회' 및 이를 읽어 데이터를 채울 수 있음.
-		*ReaderArchive << DeserializedPigeon76Data;
-		ReaderArchive->Close();		// 다 읽었으니 파일 핸들 닫기
-		delete ReaderArchive;		// 메모리 해제
+		*ReaderArchive << BufferForReader;
+		ReaderArchive->Close();
 		ReaderArchive = nullptr;
 	}
 
-	// 5. 역직렬화를 바탕으로 새로운 객체 생성
-	// 역직렬화를 통해 구조체에 
+	// 작성된 버퍼를, FMemoryReader객체 생성의 인자로 전달.
+	// 이 생성된 아카이브 객체를 Serialize() 하여 객체로 전달.
+	FMemoryReader MemoryReaderArchive(BufferForReader);
 	USXPigeon* ClonedPigeon76 = NewObject<USXPigeon>();
-	ClonedPigeon76->SetPigeonName(DeserializedPigeon76Data.Name);
-	ClonedPigeon76->SetPigeonID(DeserializedPigeon76Data.ID);
-	UE_LOG(LogTemp, Log, TEXT("[ClonsedPigeon76] Name : %s, ID : %d")
-		, *ClonedPigeon76->GetPigeonName(), ClonedPigeon76->GetPigeonID());
+	ClonedPigeon76->Serialize(MemoryReaderArchive);
+	UE_LOG(LogTemp, Log, TEXT("[ClonedPigeon76] Name : %s, ID : %d"), *ClonedPigeon76->GetPigeonName(), ClonedPigeon76->GetPigeonID());
+
 }
 
 void USXGameInstance::Shutdown()
