@@ -5,6 +5,11 @@
 #include "Example/SXEagle.h"
 #include "Example/SXPigeon.h"
 
+// Json활용 시 다음을 추가해준다.
+// 이를위해 Build.cs에 "Json", "JsonUtilities" 두 가지 모듈을 반드시 추가해야 한다.
+#include "JsonObjectConverter.h"
+#include "UObject/SavePackage.h"
+
 USXGameInstance::USXGameInstance()
 {	
 }
@@ -12,55 +17,56 @@ USXGameInstance::USXGameInstance()
 void USXGameInstance::Init()
 {
 	Super::Init();
-	
-	// Serialaize : Pigeon76(객체) -Serialize(FMemoryArchive객체)-> 메모리 버퍼 -파일 아카이브(IFileManager)-> .bin
-	// DeSerialize : 반대
-
 	// 0. 새로운 객체 생성
 	USXPigeon* Pigeon76 = NewObject<USXPigeon>();
 	Pigeon76->SetPigeonName(TEXT("Pigeon76"));
 	Pigeon76->SetPigeonID(76);
-	UE_LOG(LogTemp, Log, TEXT("[Pigeon76] Name : %s, ID : %d"), *Pigeon76->GetPigeonName(), Pigeon76->GetPigeonID());
+	UE_LOG(LogTemp, Log, TEXT("[Pigeon76] Name: %s, ID: %d"), *Pigeon76->GetPigeonName(), Pigeon76->GetPigeonID());
 
-	// 1. 경로 지정
-	// -> 경로에는 파일 경로 + 파일 이름을 Combine -> MakeStandardFilename으로 가공!
+	// 1. 절대경로 생성
 	const FString SavedDirectoryPath = FPaths::Combine(FPlatformMisc::ProjectDir(), TEXT("Saved"));
-	const FString SavedFileName(TEXT("SerializedPigeon76Data.bin"));
-	FString AbsoluteFilePath = FPaths::Combine(*SavedDirectoryPath, *SavedFileName);
-	FPaths::MakeStandardFilename(AbsoluteFilePath);
+	const FString SavedFileName = TEXT("SerializedPigeon76JsonData.txt");
+	FString AbsolutePath = FPaths::Combine(*SavedDirectoryPath, *SavedFileName);
+	FPaths::MakeStandardFilename(AbsolutePath);
 
-	// 2. Serialize 단계
-	// 2.1 객체 <-> 메모리 버퍼 : FMemoryWriter/Reader로 생성한 아카이브 객체
-	TArray<uint8> BufferForWriter;						// 한 칸 uint8짜리 배열(버퍼역할)생성
-	FMemoryWriter MemoryWriterArchive(BufferForWriter);	// 이 버퍼를 인자로, 아카이브 객체 생성(작업공간을 할당)
-	Pigeon76->Serialize(MemoryWriterArchive);			// 이 아카이브 객체로, 우리가 override한 Serialize호출
+	// [2. JSON 객체로 변환]
+	// FJsonObjectConverter::UStructToJsonObject() : 구조체를 Json객체로 만드는 함수 - UStructToJsonObjectString으로 String으로 바로도 가능
+	// 인자는 (클래스_타입, 객체, Out될 FJsonObject)이며, 마지막 FJson인자는 빼도 된다.
+	TSharedRef<FJsonObject> Pigeon76JsonObject = MakeShared<FJsonObject>();
+	FJsonObjectConverter::UStructToJsonObject(Pigeon76->GetClass(), Pigeon76, Pigeon76JsonObject);
 
-	// 2.2 메모리 버퍼 <-> 디스크 파일 : IFileManager로 생성한 아카이브 객체
-	TUniquePtr<FArchive> WriterArchive = TUniquePtr<FArchive>(IFileManager::Get().CreateFileWriter(*AbsoluteFilePath));
-	if (WriterArchive != nullptr) {
-		*WriterArchive << BufferForWriter;	// 아카이브 객체가 메모리 버퍼를 <<로 받아와 디스크 파일 작성
-		WriterArchive->Close();
-		WriterArchive = nullptr; // 이번엔 유니크 ptr로 써서, delete대신 nullptr
-	}
+	// 3. Writer 준비과정
+	FString WritedJsonString;
+	TSharedRef<TJsonWriter<TCHAR>> JsonWriterArchive = TJsonWriterFactory<TCHAR>::Create(&WritedJsonString);
 
-	// 3. DeSerialize단계
-	// 3.1 유니크포인터 파일 아카이브로, 파일 데이터를 버퍼로 가져옴
-	TArray<uint8> BufferForReader;
-	TUniquePtr<FArchive> ReaderArchive = TUniquePtr<FArchive>(IFileManager::Get().CreateFileReader(*AbsoluteFilePath));
-	if (ReaderArchive != nullptr)
+	// 4. [직렬화]
+	if (FJsonSerializer::Serialize(Pigeon76JsonObject, JsonWriterArchive) == true)
 	{
-		*ReaderArchive << BufferForReader;
-		ReaderArchive->Close();
-		ReaderArchive = nullptr;
+		// 5. 완성된 JSON 문자열을 파일로 저장 -> FileHelper사용
+		FFileHelper::SaveStringToFile(WritedJsonString, *AbsolutePath);
 	}
 
-	// 작성된 버퍼를, FMemoryReader객체 생성의 인자로 전달.
-	// 이 생성된 아카이브 객체를 Serialize() 하여 객체로 전달.
-	FMemoryReader MemoryReaderArchive(BufferForReader);
-	USXPigeon* ClonedPigeon76 = NewObject<USXPigeon>();
-	ClonedPigeon76->Serialize(MemoryReaderArchive);
-	UE_LOG(LogTemp, Log, TEXT("[ClonedPigeon76] Name : %s, ID : %d"), *ClonedPigeon76->GetPigeonName(), ClonedPigeon76->GetPigeonID());
 
+
+	// [5.JSON문자열 -> FJsonObject]
+	// FileHelper를 통해, 문자열에서 Json읽어옴
+	FString ReadedJsonString;
+	FFileHelper::LoadFileToString(ReadedJsonString, *AbsolutePath);
+	USXPigeon* ClonedPigeon76 = NewObject<USXPigeon>();		// 옮겨질 빈 객체
+
+	// 7. 문자열을 읽어들일 Reader 준비
+	TSharedRef<TJsonReader<TCHAR>> JsonReaderArchive = TJsonReaderFactory<TCHAR>::Create(ReadedJsonString);
+
+	// [역직렬화]
+	TSharedPtr<FJsonObject> ClonedPigeon76JsonObject = nullptr;
+	if (FJsonSerializer::Deserialize(JsonReaderArchive, ClonedPigeon76JsonObject) == true)
+	{
+		// 10. FJsonObject -> UStruct(객체)로 변환
+		if (FJsonObjectConverter::JsonObjectToUStruct(ClonedPigeon76JsonObject.ToSharedRef(), ClonedPigeon76->GetClass(), ClonedPigeon76) == true)
+		{
+			UE_LOG(LogTemp, Log, TEXT("[ClonedPigeon76] Name: %s, ID: %d"), *ClonedPigeon76->GetPigeonName(), ClonedPigeon76->GetPigeonID());
+		}
+	}
 }
 
 void USXGameInstance::Shutdown()
