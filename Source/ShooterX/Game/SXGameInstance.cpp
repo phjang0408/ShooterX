@@ -17,56 +17,59 @@ USXGameInstance::USXGameInstance()
 void USXGameInstance::Init()
 {
 	Super::Init();
-	// 0. 새로운 객체 생성
-	USXPigeon* Pigeon76 = NewObject<USXPigeon>();
-	Pigeon76->SetPigeonName(TEXT("Pigeon76"));
-	Pigeon76->SetPigeonID(76);
-	UE_LOG(LogTemp, Log, TEXT("[Pigeon76] Name: %s, ID: %d"), *Pigeon76->GetPigeonName(), Pigeon76->GetPigeonID());
 
-	// 1. 절대경로 생성
-	const FString SavedDirectoryPath = FPaths::Combine(FPlatformMisc::ProjectDir(), TEXT("Saved"));
-	const FString SavedFileName = TEXT("SerializedPigeon76JsonData.txt");
-	FString AbsolutePath = FPaths::Combine(*SavedDirectoryPath, *SavedFileName);
-	FPaths::MakeStandardFilename(AbsolutePath);
+	// [1. TCHAR와 FString]
+	TCHAR ArrayOfTChar[] = TEXT("Hello, Unreal!");
+		// UTF-16 인코딩 문자열을 저장하는, '언리얼 표준 문자 자료형'이 TCHAR
+		// TCHAR 문자열을 생성하기 위한 매크로가 TEXT()
 
-	// [2. JSON 객체로 변환]
-	// FJsonObjectConverter::UStructToJsonObject() : 구조체를 Json객체로 만드는 함수 - UStructToJsonObjectString으로 String으로 바로도 가능
-	// 인자는 (클래스_타입, 객체, Out될 FJsonObject)이며, 마지막 FJson인자는 빼도 된다.
-	TSharedRef<FJsonObject> Pigeon76JsonObject = MakeShared<FJsonObject>();
-	FJsonObjectConverter::UStructToJsonObject(Pigeon76->GetClass(), Pigeon76, Pigeon76JsonObject);
+	FString String0 = ArrayOfTChar;
+		// 문자열을 조금 더 자유롭게 조작(인덱싱 등)하고 싶다면, TCHAR 배열 대신, FString사용
+		// TCHAR배열을 Wrapping한 핼퍼 클래스가 FString
+	FString String1 = FString(TEXT("Hello,Unreal!"));		// FString을 바로 만드는 법(TCHAR거치지않고)
+	UE_LOG(LogTemp, Log, TEXT("String1: %s"), *String1);	// FString에 *을 붙여야 TCHAR형태로 사용 가능!
 
-	// 3. Writer 준비과정
-	FString WritedJsonString;
-	TSharedRef<TJsonWriter<TCHAR>> JsonWriterArchive = TJsonWriterFactory<TCHAR>::Create(&WritedJsonString);
 
-	// 4. [직렬화]
-	if (FJsonSerializer::Serialize(Pigeon76JsonObject, JsonWriterArchive) == true)
+	const TCHAR* PtrToTChar = *String1;						// FString + * 이 바로 TCHAR*
+	TCHAR* RawptrToChar = String1.GetCharArray().GetData(); // const를 깨는 방법(참고만)
+
+	// [2. FString 활용]
+	// Contains로 포함여부 확인 가능(bool)
+	// ESearchCase::IgnoreCase -> 대소문자 무시
+	if (String1.Contains(TEXT("unreal"), ESearchCase::IgnoreCase) == true)
 	{
-		// 5. 완성된 JSON 문자열을 파일로 저장 -> FileHelper사용
-		FFileHelper::SaveStringToFile(WritedJsonString, *AbsolutePath);
+		// Find함수 -> 그 인덱스 시작지점 반환
+		int32 Index = String1.Find(TEXT("unreal"), ESearchCase::IgnoreCase);
+		// Mid함수 -> 인덱스부터 마지막까지 자르는 함수
+		FString FoundedString = String1.Mid(Index);
+
+		UE_LOG(LogTemp, Log, TEXT("Founded String : %s"), *FoundedString);
 	}
 
+	// [3. int32, float과 FString간의 상호변환]
+	int32 IntValue = 7;
+	float FloatValue = 3.141592f;
 
+	// PrintF -> c언어 printf와 거진 유사
+	FString StringWithNumbers = FString::Printf(TEXT("int32: %d, float: %f"), IntValue, FloatValue);
+	UE_LOG(LogTemp, Log, TEXT("StringWithNumber : %s"), *StringWithNumbers);
 
-	// [5.JSON문자열 -> FJsonObject]
-	// FileHelper를 통해, 문자열에서 Json읽어옴
-	FString ReadedJsonString;
-	FFileHelper::LoadFileToString(ReadedJsonString, *AbsolutePath);
-	USXPigeon* ClonedPigeon76 = NewObject<USXPigeon>();		// 옮겨질 빈 객체
+	// int32 -> FString : FromInt
+	FString IntString = FString::FromInt(IntValue);
+	UE_LOG(LogTemp, Log, TEXT("IntString : %s"), *IntString);
 
-	// 7. 문자열을 읽어들일 Reader 준비
-	TSharedRef<TJsonReader<TCHAR>> JsonReaderArchive = TJsonReaderFactory<TCHAR>::Create(ReadedJsonString);
+	// float -> FString : SanitizeFloat
+	FString FloatString = FString::SanitizeFloat(FloatValue);
+	UE_LOG(LogTemp, Log, TEXT("FloatString : %s"), *FloatString);
 
-	// [역직렬화]
-	TSharedPtr<FJsonObject> ClonedPigeon76JsonObject = nullptr;
-	if (FJsonSerializer::Deserialize(JsonReaderArchive, ClonedPigeon76JsonObject) == true)
-	{
-		// 10. FJsonObject -> UStruct(객체)로 변환
-		if (FJsonObjectConverter::JsonObjectToUStruct(ClonedPigeon76JsonObject.ToSharedRef(), ClonedPigeon76->GetClass(), ClonedPigeon76) == true)
-		{
-			UE_LOG(LogTemp, Log, TEXT("[ClonedPigeon76] Name: %s, ID: %d"), *ClonedPigeon76->GetPigeonName(), ClonedPigeon76->GetPigeonID());
-		}
-	}
+	// FCString은 C언어 문자열 라이브러리 함수들을 제공함(atoi, strcpy 등)
+	// FString -> int32 : Atoi
+	int32 IntValueFromString = FCString::Atoi(*IntString);
+	UE_LOG(LogTemp, Log, TEXT("IntValueFromString : %d"), IntValueFromString);
+
+	// FString -> float : Atof
+	float FloatValueFromString = FCString::Atof(*FloatString);
+	UE_LOG(LogTemp, Log, TEXT("FloatValueFromString : %f"), FloatValueFromString);
 }
 
 void USXGameInstance::Shutdown()
