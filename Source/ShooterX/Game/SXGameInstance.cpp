@@ -18,58 +18,71 @@ void USXGameInstance::Init()
 {
 	Super::Init();
 
-	// [1. TCHAR와 FString]
-	TCHAR ArrayOfTChar[] = TEXT("Hello, Unreal!");
-		// UTF-16 인코딩 문자열을 저장하는, '언리얼 표준 문자 자료형'이 TCHAR
-		// TCHAR 문자열을 생성하기 위한 매크로가 TEXT()
+	TArray<int32> IntArray;
 
-	FString String0 = ArrayOfTChar;
-		// 문자열을 조금 더 자유롭게 조작(인덱싱 등)하고 싶다면, TCHAR 배열 대신, FString사용
-		// TCHAR배열을 Wrapping한 핼퍼 클래스가 FString
-	FString String1 = FString(TEXT("Hello,Unreal!"));		// FString을 바로 만드는 법(TCHAR거치지않고)
-	UE_LOG(LogTemp, Log, TEXT("String1: %s"), *String1);	// FString에 *을 붙여야 TCHAR형태로 사용 가능!
+	IntArray.Init(10, 5); // 초기화 : [10,10,10,10,10]
+	
+	// 1. 삽입
+	TArray<FString> StrArray;
+	StrArray.Add(TEXT("Hello"));		// Add,Push : push_back, 임시변수 생성 후, 배열에 복사하는 방식
+	StrArray.Emplace(TEXT("World"));	// Emplace : 배열 안에서 직접 생성
+	// 효율 차이는 적음
+	FString Arr[] = { TEXT("of"), TEXT("Tomorrow") };
+	StrArray.Append(Arr, UE_ARRAY_COUNT(Arr));	// Append : 다수의 원소를 배열로 추가
+	StrArray.AddUnique(TEXT("!"));				// AddUnique : FindOrAdd방식의 Add
+	StrArray.Insert(TEXT("Brave"), 1);			// Insert : 추가할 위치를 지정가능
 
-
-	const TCHAR* PtrToTChar = *String1;						// FString + * 이 바로 TCHAR*
-	TCHAR* RawptrToChar = String1.GetCharArray().GetData(); // const를 깨는 방법(참고만)
-
-	// [2. FString 활용]
-	// Contains로 포함여부 확인 가능(bool)
-	// ESearchCase::IgnoreCase -> 대소문자 무시
-	if (String1.Contains(TEXT("unreal"), ESearchCase::IgnoreCase) == true)
+	// 2. 반복
+	// 공식문서에선 C++ 범위 기능 for를 추천함
+	// 또한 반복자 생성도 가능
+	FString JoinedStr;
+	for (auto& Str : StrArray)
 	{
-		// Find함수 -> 그 인덱스 시작지점 반환
-		int32 Index = String1.Find(TEXT("unreal"), ESearchCase::IgnoreCase);
-		// Mid함수 -> 인덱스부터 마지막까지 자르는 함수
-		FString FoundedString = String1.Mid(Index);
-
-		UE_LOG(LogTemp, Log, TEXT("Founded String : %s"), *FoundedString);
+		JoinedStr += Str;
+		JoinedStr += TEXT(" ");
+	}
+	for (auto It = StrArray.CreateConstIterator(); It; ++It)
+	{
+		// It을 활용...
 	}
 
-	// [3. int32, float과 FString간의 상호변환]
-	int32 IntValue = 7;
-	float FloatValue = 3.141592f;
+	// 3. 정렬
+	StrArray.Sort(); // 퀵정렬, 숫자는 오름차순, FString은 대소구분없이 사전식 비교
+	StrArray.Sort([](const FString& A, const FString& B) {
+		return A.Len() < B.Len();
+		});
+	StrArray.HeapSort(); // 힙정렬, Sort와 방식은 동일하며, 알고리즘만 힙정렬 채택
+	StrArray.StableSort(); // '기준'이 같은 요소들은, 정렬 이전의 순서로 보장해줌.
 
-	// PrintF -> c언어 printf와 거진 유사
-	FString StringWithNumbers = FString::Printf(TEXT("int32: %d, float: %f"), IntValue, FloatValue);
-	UE_LOG(LogTemp, Log, TEXT("StringWithNumber : %s"), *StringWithNumbers);
+	// 4. 쿼리
+	StrArray.Num();										// 원소 개수 확인, int32형 반환
+	StrArray.IsValidIndex(3);							// 인덱스 유효성 검사
+	FString WantToFind = StrArray[2];					// 배열처럼 접근 가능
 
-	// int32 -> FString : FromInt
-	FString IntString = FString::FromInt(IntValue);
-	UE_LOG(LogTemp, Log, TEXT("IntString : %s"), *IntString);
+	StrArray.Contains(TEXT("Hello"));					// 존재 여부 확인
+	int32 FindIdx = StrArray.Find(TEXT("Brave"));		// 위치 반환
+	
+	FString* FoundPtr = StrArray.FindByPredicate([](const FString & Item) {
+		return Item.StartsWith(TEXT("H"));
+	});	// FindByPredicate : 조건 기반 탐색, []로 조건 걸고, 조건에 맞는 첫 번째 포인터 반환
 
-	// float -> FString : SanitizeFloat
-	FString FloatString = FString::SanitizeFloat(FloatValue);
-	UE_LOG(LogTemp, Log, TEXT("FloatString : %s"), *FloatString);
+	// 5. 제거
+	if (StrArray.IsValidIndex(3))
+	{
+		StrArray.RemoveAt(3);			// RemoveAt : 인덱스 기반 제거, 느림
+	}
+	StrArray.Remove(TEXT("Hello"));				// Remove : 해당 값 모두 제거
+	StrArray.RemoveAll([](FString val) {});		// RemoveAll : 조건 만족 값 모두 제거
 
-	// FCString은 C언어 문자열 라이브러리 함수들을 제공함(atoi, strcpy 등)
-	// FString -> int32 : Atoi
-	int32 IntValueFromString = FCString::Atoi(*IntString);
-	UE_LOG(LogTemp, Log, TEXT("IntValueFromString : %d"), IntValueFromString);
+	// 제거 - Swap계열
+	// Swap 계열은 삭제 후, 맨 마지막 원소를 삭제 위치로 이동시키는 방식
+	// 순서가 섞이지만, 속도가 매우 빨라, 순서가 중요치 않으면 사용하는게 좋음
+	StrArray.RemoveAtSwap(3);		// REmoveAtSwap : 삭제 후, 맨 마지막 원소를 이동시켜 채움
+	StrArray.RemoveAllSwap([](FString val) {	// RemoveAllSwap : RemoveAll + Swap방식
+		return val.Contains("o");
+		}); 
 
-	// FString -> float : Atof
-	float FloatValueFromString = FCString::Atof(*FloatString);
-	UE_LOG(LogTemp, Log, TEXT("FloatValueFromString : %f"), FloatValueFromString);
+	StrArray.Empty();							// 전부 제거
 }
 
 void USXGameInstance::Shutdown()
