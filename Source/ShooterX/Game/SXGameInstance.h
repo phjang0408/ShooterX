@@ -6,6 +6,8 @@
 #include "Engine/GameInstance.h"
 #include "SXGameInstance.generated.h"
 
+class USXPigeon;
+	// 전방 선언!
 /**
  * 
  */
@@ -21,9 +23,16 @@ public:
 
 	virtual void Shutdown() override;
 
+	// 콜백 함수 등록 => Dynamic이므로 꼭 UFUNCION을 적어줘야 함.
+	UFUNCTION()
+	void HandlePigeonFlying(const FString& InName, const int32 InID);
+
 protected:
 	UPROPERTY()
 	FString Name;
 
+	// 새로운 UObject 포인터 프로터피 선언
+	UPROPERTY()
+	TObjectPtr<USXPigeon> SpawnedPigeon;
 
 };

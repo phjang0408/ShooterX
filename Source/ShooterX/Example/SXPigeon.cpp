@@ -10,6 +10,10 @@ USXPigeon::USXPigeon()
 void USXPigeon::Fly()
 {
 	UE_LOG(LogTemp, Log, TEXT("%s is now flying"), *Name);
+	
+	// Fly함수에선, OnPigeonFlying 델리게이트에 대해 Broadcast를 수행하려 한다.
+	// 인자들 적절히 넣어주고 실행하면, OnPigeionFlying 구독한 애들이, 호출을 받게 된다.
+	OnPigeonFlying.Broadcast(*Name, ID);
 }
 
 void USXPigeon::Serialize(FArchive& Ar)

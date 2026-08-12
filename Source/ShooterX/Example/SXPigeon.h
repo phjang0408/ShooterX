@@ -6,6 +6,9 @@
 #include "Example/SXFlyable.h"	
 #include "SXPigeon.generated.h"
 
+// 델리게이트 타입 생성
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPigeonFlying, const FString&, InName, const int32, InID);
+
 USTRUCT()
 struct FSXPigeonData	// USTRUCT()키워드에, 접두사 F가 빠지면 에러
 {
@@ -24,6 +27,7 @@ public:
 		InArchive << InPigeonData.ID;
 		return InArchive;
 	}
+
 private:
 	UPROPERTY()
 	FString Name;
@@ -53,6 +57,12 @@ public:
 	// 방법 2) Serialize()함수
 	// 구조체를 따로 빼지 않고도 가능
 	virtual void Serialize(FArchive& Ar) override;
+
+
+public:
+	// 델리게이트 변수를 필드로서 선언
+	// FOnPigeonFlying 타입을 쓰는 델리게이트에 변수를 만듬
+	FOnPigeonFlying OnPigeonFlying;	
 
 private:
 	UPROPERTY()
