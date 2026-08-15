@@ -7,20 +7,15 @@
 
 ASXHealthPack::ASXHealthPack() : HealAmount(100.f)
 {
-	// bCanEverTick : 언리얼의 Tick()함수가 매 프레임 호출할 지 결정
-	// true면 수행, flase면 수행하지 않음.
-	PrimaryActorTick.bCanEverTick = false;
+	// Tick 함수를 쓸 예정이니 true로 설정
+	PrimaryActorTick.bCanEverTick = true;
 
-	// [생성자 상황] 에서 사용
-	// CreateDefaultSubobject -> SetupAttachment, 등록은 자동 예약
-	// CreateDefaultSubobject<T>(FName name) : 타입 T의 컴포넌트나 서브 오브젝트 생성, 고유 식별자(FName)으로 구분
 	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
 	SetRootComponent(SceneComponent);
 	
 	BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComponent"));
 	BoxComponent->SetupAttachment(GetRootComponent());
 
-	// 컴포넌트 수정
 	BoxComponent->SetRelativeLocation(FVector(0.f, 0.f, 50.f));
 	BoxComponent->SetRelativeScale3D(FVector(0.6f, 0.8f, 0.8f));
 	BoxComponent->SetRelativeRotation(FRotator(0.f, 0.f, 0.f));
@@ -31,13 +26,35 @@ ASXHealthPack::ASXHealthPack() : HealAmount(100.f)
 	BodyStaticMeshComponent->SetRelativeLocation(FVector(0.f, 0.f, 50.f));
 	BodyStaticMeshComponent->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
 	
-	// 에셋 설정
-	// FObjectFinder<T> 변수이름(경로) : 에셋 로딩 기구, 클래스 생성자 안에서만 사용 가능
-	// 기본적으로 static 사용(에셋은 한번만 처리하므로)
-	// 생성자 전용이므로, 런타임에는 LoadObject나 FStreamableManager를 사용한다.
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> BodyStaticMesh(TEXT("/Script/Engine.StaticMesh'/Game/LyraResource/Weapons/Healthpack/Mesh/SM_healthpackFull.SM_healthpackFull'"));
 	if (true == BodyStaticMesh.Succeeded())
 	{
 		BodyStaticMeshComponent->SetStaticMesh(BodyStaticMesh.Object);
 	}
 }
+
+void ASXHealthPack::BeginPlay()
+{
+	// AActor의 BeginPlay를 먼저 실행한 후 진행한다.
+	Super::BeginPlay();
+
+	// 배치된 액터의 위치를 StartLocation(FVector)로 구해 변수로 만들어둔다.
+	StartLocation = GetActorLocation();	
+}
+
+void ASXHealthPack::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	// FMath::Sin(시간) -> 시간을 기반으로 -1.0 ~ +1.0을 반환한다.
+	// 시간에는 [누적시간 * 속도] 형태로 곱해준다.
+	// 여기에 -1 ~ 1 범위니까, 진폭을 또 곱해줘서 높낮이를 맞춰준다.
+	ElapsedTime += DeltaSeconds;
+	const float ZOffset = FMath::Sin(ElapsedTime * MovementSpeed) * Amplitude;
+
+	// 변수로 만들어 둔 원래 위치에, ZOffset을 더해, 새로운 위치로 지정해준다.
+	FVector NewLocation = StartLocation;
+	NewLocation.Z += ZOffset;
+	SetActorLocation(NewLocation);
+}
+
