@@ -4,6 +4,7 @@
 #include "Components/SceneComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "GameFramework/RotatingMovementComponent.h"
 
 ASXHealthPack::ASXHealthPack() : HealAmount(100.f)
 {
@@ -12,6 +13,12 @@ ASXHealthPack::ASXHealthPack() : HealAmount(100.f)
 
 	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
 	SetRootComponent(SceneComponent);
+
+	// RotatingMovementComponent 추가
+	RotatingMovementComponent = CreateDefaultSubobject<URotatingMovementComponent>(TEXT("RotatingComponent"));
+	// RotatingMovementComponent->SetupAttachment(GetRootComponent());
+	// UMovementComponent는, UActorComponent를 상속받음 -> USceneComponent와 같은 부모
+	// 즉, 따로 attach할 필요 없음.(Transform이 필요하지 않음)
 	
 	BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComponent"));
 	BoxComponent->SetupAttachment(GetRootComponent());
@@ -39,7 +46,10 @@ void ASXHealthPack::BeginPlay()
 	Super::BeginPlay();
 
 	// 배치된 액터의 위치를 StartLocation(FVector)로 구해 변수로 만들어둔다.
-	StartLocation = GetActorLocation();	
+	StartLocation = GetActorLocation();
+
+	RotationSpeed = 300.f;
+	RotatingMovementComponent->RotationRate = FRotator(0.f, RotationSpeed, 0.f);
 }
 
 void ASXHealthPack::Tick(float DeltaSeconds)

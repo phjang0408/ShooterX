@@ -8,6 +8,8 @@
 class USceneComponent;
 class UBoxComponent;
 class UStaticMeshComponent;
+//  전방선언 추가
+class URotatingMovementComponent;
 
 UCLASS()
 class SHOOTERX_API ASXHealthPack : public AActor
@@ -17,9 +19,6 @@ class SHOOTERX_API ASXHealthPack : public AActor
 public:
 	ASXHealthPack();
 
-	// 이벤트 함수
-	// AActor에서 override하여 사용한다.
-	// 여기선, 힐팩의 위치를 BeginPlay로 구하고, 매 틱마다 상하로 움직이는 기능을 구현한다.
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 
@@ -50,4 +49,11 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "ShooterX|SXHealthPack")
 	float MovementSpeed = 2.f;
+
+	// Rotating Movement
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess), Category = "ShooterX|SXHealthPack")
+	TObjectPtr<URotatingMovementComponent> RotatingMovementComponent;
+
+	UPROPERTY(EditAnywhere, Category = "ShooterX|SXHealthPack")
+	float RotationSpeed = 300.f;
 };
