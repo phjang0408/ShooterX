@@ -47,6 +47,19 @@ ASXPlayerPawn::ASXPlayerPawn()
 	FloatingPawnMovement = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("FloatingPawnMovement"));
 }
 
+void ASXPlayerPawn::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// AnimationMode를 설정한다 : SIngleMode로 설정
+	SkeletalMeshComponent->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+
+	UAnimationAsset* AnimationSequenceAsset = LoadObject<UAnimationAsset>(SkeletalMeshComponent, TEXT("/Script/Engine.AnimSequence'/Game/LyraResource/Characters/Heroes/Mannequin/Animations/Locomotion/Unarmed/MF_Unarmed_Jog_Fwd.MF_Unarmed_Jog_Fwd'"));
+	if (IsValid(AnimationSequenceAsset) == true) {
+		SkeletalMeshComponent->PlayAnimation(AnimationSequenceAsset, true);
+	}
+}
+
 void ASXPlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);	// override할 때는 항상 Super먼저!

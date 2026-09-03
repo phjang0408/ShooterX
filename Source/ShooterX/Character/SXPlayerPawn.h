@@ -21,6 +21,8 @@ public:
 	ASXPlayerPawn();
 
 protected:
+	virtual void BeginPlay() override;
+
 	// Components
 	UPROPERTY(EditDefaultsOnly, Category = "ShooterX|ASXPlayerPawn")
 	TObjectPtr<UCapsuleComponent> CapsuleComponent;
