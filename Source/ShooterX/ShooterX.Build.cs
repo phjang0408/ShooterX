@@ -11,7 +11,10 @@ public class ShooterX : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[] 
 			{ 
 				// Initial Dependendcies.
-				"Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput",
+				"Core", "CoreUObject", "Engine", "InputCore", 
+				
+				// Enhanced Input 추가
+				"EnhancedInput",
 
 				// JSON 모듈 추가
 				"Json", "JsonUtilities",
