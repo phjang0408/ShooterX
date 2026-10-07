@@ -7,6 +7,7 @@
 
 void USXAnimInstance::NativeInitializeAnimation()
 {
+	Super::NativeInitializeAnimation();
 	// Character -> Skeletal Mesh -> AnimInstance로 내려가는데,
 	// Anim에서 Character(OwnerPawn)을 접근하려면 "TryGetPawnOnwer"를 사용한다.
 	APawn* OwnerPawn = TryGetPawnOwner();
@@ -27,6 +28,7 @@ void USXAnimInstance::NativeInitializeAnimation()
 
 void USXAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
+	Super::NativeUpdateAnimation(DeltaSeconds);
 	if (IsValid(OwnerCharacterMovement) == true)
 	{
 		Velocity = OwnerCharacterMovement->Velocity;
