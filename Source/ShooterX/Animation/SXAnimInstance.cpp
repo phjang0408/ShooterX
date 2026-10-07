@@ -40,5 +40,10 @@ void USXAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		bool bIsAccelerationNearZero = FMath::IsNearlyZero(GroundAcceleration);
 
 		bShouldMove = (KINDA_SMALL_NUMBER < GroundSpeed) && (bIsAccelerationNearZero == false);
+
+		bIsFalling = OwnerCharacterMovement->IsFalling();
+		if (bIsFalling == true) {
+			UE_LOG(LogTemp, Log, TEXT("Falling!"));
+		}
 	}
 }

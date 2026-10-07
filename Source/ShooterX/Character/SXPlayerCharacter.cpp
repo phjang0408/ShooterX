@@ -96,6 +96,9 @@ void ASXPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	{	// 2. BindAction함수를 통해, "Move IA가 Triggered로 발생하면, this에서 InputMove 함수를 실행한다."로 연결
 		EnhancedInputComponent->BindAction(PlayerCharacterInputConfig->Move, ETriggerEvent::Triggered, this, &ThisClass::InputMove);
 		EnhancedInputComponent->BindAction(PlayerCharacterInputConfig->Look, ETriggerEvent::Triggered, this, &ThisClass::InputLook);
+		// 점프는 새로 만들지 않고, ACharacter 클래스의 Jump 멤버함수 사용.
+		EnhancedInputComponent->BindAction(PlayerCharacterInputConfig->Jump, ETriggerEvent::Started, this, &ACharacter::Jump);
+		EnhancedInputComponent->BindAction(PlayerCharacterInputConfig->Jump, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 	}
 }
 

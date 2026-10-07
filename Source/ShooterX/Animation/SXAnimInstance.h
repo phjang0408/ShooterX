@@ -40,5 +40,8 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	uint8 bShouldMove : 1;	// bool, 
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	uint8 bIsFalling : 1;
 #pragma endregion
 };
