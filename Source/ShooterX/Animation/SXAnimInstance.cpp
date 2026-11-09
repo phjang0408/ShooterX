@@ -41,6 +41,7 @@ void USXAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 		bShouldMove = (KINDA_SMALL_NUMBER < GroundSpeed) && (bIsAccelerationNearZero == false);
 
+		// 점프 속성
 		bIsFalling = OwnerCharacterMovement->IsFalling();
 		if (bIsFalling == true) {
 			UE_LOG(LogTemp, Log, TEXT("Falling!"));
