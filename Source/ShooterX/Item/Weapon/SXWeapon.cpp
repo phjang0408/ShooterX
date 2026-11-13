@@ -21,5 +21,12 @@ void ASXWeapon::BeginPlay()
 
 void ASXWeapon::HandleOnPickUp(ASXPlayerCharacter* InPickUpCharacter)
 {
-	UE_LOG(LogTemp, Error, TEXT("HandleOnPickUp(%s)"), *InPickUpCharacter->GetName());
+	// UE_LOG(LogTemp, Error, TEXT("HandleOnPickUp(%s)"), *InPickUpCharacter->GetName());
+
+	if (IsValid(InPickUpCharacter) == false) { return; }
+
+	FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
+	AttachToComponent(InPickUpCharacter->GetMesh(), AttachmentRules, FName(TEXT("hand_rSocket")));	
+	SetActorEnableCollision(false);
+	PickupComponent->SetSimulatePhysics(false);
 }
