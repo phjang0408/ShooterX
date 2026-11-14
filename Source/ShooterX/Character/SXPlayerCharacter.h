@@ -44,6 +44,8 @@ private:
 	
 	void InputLook(const FInputActionValue& InValue);
 
+	void InputAttackMelee(const FInputActionValue& InValue);
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
 	TObjectPtr<USXInputConfig> PlayerCharacterInputConfig;

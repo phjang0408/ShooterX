@@ -7,6 +7,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Animation/SXAnimInstance.h"
 
 //Input부분 Header
 #include "EnhancedInputComponent.h"
@@ -99,6 +100,7 @@ void ASXPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		// 점프는 새로 만들지 않고, ACharacter 클래스의 Jump 멤버함수 사용.
 		EnhancedInputComponent->BindAction(PlayerCharacterInputConfig->Jump, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(PlayerCharacterInputConfig->Jump, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		EnhancedInputComponent->BindAction(PlayerCharacterInputConfig->AttackMelee, ETriggerEvent::Started, this, &ThisClass::InputAttackMelee);
 	}
 }
 
@@ -119,4 +121,15 @@ void ASXPlayerCharacter::InputLook(const FInputActionValue& InValue)
 	// 마우스 감도를 조절하려면, LookVector에 계수를 곱하면서 감도 조절
 	AddControllerYawInput(LookVector.X);
 	AddControllerPitchInput(LookVector.Y);
+}
+
+void ASXPlayerCharacter::InputAttackMelee(const FInputActionValue& InValue)
+{
+	if (GetCharacterMovement()->IsFalling() == true) { return; }
+
+	USXAnimInstance* AnimInstance = Cast<USXAnimInstance>(GetMesh()->GetAnimInstance());
+	if (IsValid(AnimInstance) == true && IsValid(AttackMeleeMontage)
+		&& AnimInstance->Montage_IsPlaying(AttackMeleeMontage) == false) {
+		AnimInstance->Montage_Play(AttackMeleeMontage);
+	}
 }
