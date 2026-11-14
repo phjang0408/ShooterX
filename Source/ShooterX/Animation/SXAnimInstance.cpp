@@ -48,3 +48,12 @@ void USXAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		}
 	}
 }
+
+void USXAnimInstance::AnimNotify_CheckHit()
+{
+	// IsBound() : 델리게이트에 호출될 함수가 연결되었는지를 확인
+	if (OnCheckHit.IsBound() == true)
+	{
+		OnCheckHit.Broadcast();
+	}
+}

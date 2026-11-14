@@ -8,6 +8,8 @@
 
 class ASXCharacterBase;
 class UCharacterMovementComponent;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCheckHit);
 /**
  * 
  */
@@ -29,6 +31,13 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BluePrintReadOnly)
 	TObjectPtr<UCharacterMovementComponent> OwnerCharacterMovement;
+
+private:
+	UFUNCTION()
+	void AnimNotify_CheckHit();
+
+public:
+	FOnCheckHit OnCheckHit;
 
 #pragma region Walk
 protected:
