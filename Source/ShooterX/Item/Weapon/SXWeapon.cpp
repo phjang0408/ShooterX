@@ -26,7 +26,11 @@ void ASXWeapon::HandleOnPickUp(ASXPlayerCharacter* InPickUpCharacter)
 	if (IsValid(InPickUpCharacter) == false) { return; }
 
 	FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
+	// 캐릭터 메시에 hand_rSocket를 찾아서, AttachmentRules에 따라 붙임.
 	AttachToComponent(InPickUpCharacter->GetMesh(), AttachmentRules, FName(TEXT("hand_rSocket")));	
+	
+	// Weapon의 Collision Enable
 	SetActorEnableCollision(false);
+	// Weapon의 RootComponent였던 PickupComponent의 물리 해제, 부착된 손의 Physic를 따라감.
 	PickupComponent->SetSimulatePhysics(false);
 }

@@ -12,7 +12,8 @@ void USXPickupComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// this Component에 Delegate가 발생하면 실행되는 Dyanimc을 추가한다.
+	// UPrimitiveComponent에 선언된 
+	// 겹치게 되면, 등록된 Delegate함수를 실행한다.
 	OnComponentBeginOverlap.AddDynamic(this, &ThisClass::HandleOnComponentBeginOverlap);
 }
 
@@ -21,6 +22,7 @@ void USXPickupComponent::HandleOnComponentBeginOverlap(UPrimitiveComponent* Over
 	ASXPlayerCharacter* OverlappedCharacter = Cast<ASXPlayerCharacter>(OtherActor);
 	if (IsValid(OverlappedCharacter) == true)
 	{
+		// 겹친 캐릭터도 같이 인자로 전송
 		OnPickUp.Broadcast(OverlappedCharacter);
 
 		// AddDyanmic 정리
